@@ -1,0 +1,25 @@
+{
+  "name": "abc-retail-integration",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ABC Retail System Integration - Phase 2 demo",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test",
+    "batch:run": "node src/batch/cli.js",
+    "batch:scheduler": "node src/batch/scheduler.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.5",
+    "csv-parse": "^7.0.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "node-cron": "^4.6.0",
+    "swagger-ui-express": "^5.0.1"
+  }
+}

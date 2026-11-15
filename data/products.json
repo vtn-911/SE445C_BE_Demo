@@ -1,0 +1,1202 @@
+[
+  {
+    "sku": "SKU-0001",
+    "name": "Organic Apples 1",
+    "category": "Fresh Produce",
+    "price": 4.99
+  },
+  {
+    "sku": "SKU-0002",
+    "name": "Extra Virgin Olive Oil 1",
+    "category": "Pantry",
+    "price": 12.36
+  },
+  {
+    "sku": "SKU-0003",
+    "name": "Sparkling Water 1",
+    "category": "Beverages",
+    "price": 19.73
+  },
+  {
+    "sku": "SKU-0004",
+    "name": "Laundry Detergent 1",
+    "category": "Household",
+    "price": 27.1
+  },
+  {
+    "sku": "SKU-0005",
+    "name": "Herbal Shampoo 1",
+    "category": "Personal Care",
+    "price": 34.47
+  },
+  {
+    "sku": "SKU-0006",
+    "name": "USB-C Charger 1",
+    "category": "Electronics",
+    "price": 41.84
+  },
+  {
+    "sku": "SKU-0007",
+    "name": "Ceramic Mug 1",
+    "category": "Home & Kitchen",
+    "price": 49.21
+  },
+  {
+    "sku": "SKU-0008",
+    "name": "Yoga Mat 1",
+    "category": "Fitness & Outdoor",
+    "price": 56.58
+  },
+  {
+    "sku": "SKU-0009",
+    "name": "Baby Spinach 2",
+    "category": "Fresh Produce",
+    "price": 63.95
+  },
+  {
+    "sku": "SKU-0010",
+    "name": "Whole Grain Pasta 2",
+    "category": "Pantry",
+    "price": 71.32
+  },
+  {
+    "sku": "SKU-0011",
+    "name": "Cold Brew Coffee 2",
+    "category": "Beverages",
+    "price": 78.69
+  },
+  {
+    "sku": "SKU-0012",
+    "name": "Dishwashing Liquid 2",
+    "category": "Household",
+    "price": 86.06
+  },
+  {
+    "sku": "SKU-0013",
+    "name": "Moisturizing Lotion 2",
+    "category": "Personal Care",
+    "price": 93.43
+  },
+  {
+    "sku": "SKU-0014",
+    "name": "Bluetooth Speaker 2",
+    "category": "Electronics",
+    "price": 100.8
+  },
+  {
+    "sku": "SKU-0015",
+    "name": "Bamboo Cutting Board 2",
+    "category": "Home & Kitchen",
+    "price": 108.17
+  },
+  {
+    "sku": "SKU-0016",
+    "name": "Insulated Cooler 2",
+    "category": "Fitness & Outdoor",
+    "price": 115.54
+  },
+  {
+    "sku": "SKU-0017",
+    "name": "Avocado Hass 3",
+    "category": "Fresh Produce",
+    "price": 122.91
+  },
+  {
+    "sku": "SKU-0018",
+    "name": "Roasted Almonds 3",
+    "category": "Pantry",
+    "price": 130.28
+  },
+  {
+    "sku": "SKU-0019",
+    "name": "Green Tea 3",
+    "category": "Beverages",
+    "price": 137.65
+  },
+  {
+    "sku": "SKU-0020",
+    "name": "Microfiber Cloths 3",
+    "category": "Household",
+    "price": 145.02
+  },
+  {
+    "sku": "SKU-0021",
+    "name": "Mineral Sunscreen 3",
+    "category": "Personal Care",
+    "price": 152.39
+  },
+  {
+    "sku": "SKU-0022",
+    "name": "Wireless Mouse 3",
+    "category": "Electronics",
+    "price": 159.76
+  },
+  {
+    "sku": "SKU-0023",
+    "name": "Glass Food Jar 3",
+    "category": "Home & Kitchen",
+    "price": 167.13
+  },
+  {
+    "sku": "SKU-0024",
+    "name": "Resistance Bands 3",
+    "category": "Fitness & Outdoor",
+    "price": 174.5
+  },
+  {
+    "sku": "SKU-0025",
+    "name": "Heirloom Tomatoes 4",
+    "category": "Fresh Produce",
+    "price": 181.87
+  },
+  {
+    "sku": "SKU-0026",
+    "name": "Wildflower Honey 4",
+    "category": "Pantry",
+    "price": 189.24
+  },
+  {
+    "sku": "SKU-0027",
+    "name": "Coconut Water 4",
+    "category": "Beverages",
+    "price": 196.61
+  },
+  {
+    "sku": "SKU-0028",
+    "name": "Storage Containers 4",
+    "category": "Household",
+    "price": 8.98
+  },
+  {
+    "sku": "SKU-0029",
+    "name": "Hand Soap 4",
+    "category": "Personal Care",
+    "price": 16.35
+  },
+  {
+    "sku": "SKU-0030",
+    "name": "LED Desk Lamp 4",
+    "category": "Electronics",
+    "price": 23.72
+  },
+  {
+    "sku": "SKU-0031",
+    "name": "Cotton Apron 4",
+    "category": "Home & Kitchen",
+    "price": 31.09
+  },
+  {
+    "sku": "SKU-0032",
+    "name": "Camping Lantern 4",
+    "category": "Fitness & Outdoor",
+    "price": 38.46
+  },
+  {
+    "sku": "SKU-0033",
+    "name": "Blueberries 5",
+    "category": "Fresh Produce",
+    "price": 45.83
+  },
+  {
+    "sku": "SKU-0034",
+    "name": "Basmati Rice 5",
+    "category": "Pantry",
+    "price": 53.2
+  },
+  {
+    "sku": "SKU-0035",
+    "name": "Orange Juice 5",
+    "category": "Beverages",
+    "price": 60.57
+  },
+  {
+    "sku": "SKU-0036",
+    "name": "Paper Towels 5",
+    "category": "Household",
+    "price": 67.94
+  },
+  {
+    "sku": "SKU-0037",
+    "name": "Dental Floss 5",
+    "category": "Personal Care",
+    "price": 75.31
+  },
+  {
+    "sku": "SKU-0038",
+    "name": "Power Bank 5",
+    "category": "Electronics",
+    "price": 82.68
+  },
+  {
+    "sku": "SKU-0039",
+    "name": "Stainless Bottle 5",
+    "category": "Home & Kitchen",
+    "price": 90.05
+  },
+  {
+    "sku": "SKU-0040",
+    "name": "Running Cap 5",
+    "category": "Fitness & Outdoor",
+    "price": 97.42
+  },
+  {
+    "sku": "SKU-0041",
+    "name": "Organic Apples 6",
+    "category": "Fresh Produce",
+    "price": 104.79
+  },
+  {
+    "sku": "SKU-0042",
+    "name": "Extra Virgin Olive Oil 6",
+    "category": "Pantry",
+    "price": 112.16
+  },
+  {
+    "sku": "SKU-0043",
+    "name": "Sparkling Water 6",
+    "category": "Beverages",
+    "price": 119.53
+  },
+  {
+    "sku": "SKU-0044",
+    "name": "Laundry Detergent 6",
+    "category": "Household",
+    "price": 126.9
+  },
+  {
+    "sku": "SKU-0045",
+    "name": "Herbal Shampoo 6",
+    "category": "Personal Care",
+    "price": 134.27
+  },
+  {
+    "sku": "SKU-0046",
+    "name": "USB-C Charger 6",
+    "category": "Electronics",
+    "price": 141.64
+  },
+  {
+    "sku": "SKU-0047",
+    "name": "Ceramic Mug 6",
+    "category": "Home & Kitchen",
+    "price": 149.01
+  },
+  {
+    "sku": "SKU-0048",
+    "name": "Yoga Mat 6",
+    "category": "Fitness & Outdoor",
+    "price": 156.38
+  },
+  {
+    "sku": "SKU-0049",
+    "name": "Baby Spinach 7",
+    "category": "Fresh Produce",
+    "price": 163.75
+  },
+  {
+    "sku": "SKU-0050",
+    "name": "Whole Grain Pasta 7",
+    "category": "Pantry",
+    "price": 171.12
+  },
+  {
+    "sku": "SKU-0051",
+    "name": "Cold Brew Coffee 7",
+    "category": "Beverages",
+    "price": 178.49
+  },
+  {
+    "sku": "SKU-0052",
+    "name": "Dishwashing Liquid 7",
+    "category": "Household",
+    "price": 185.86
+  },
+  {
+    "sku": "SKU-0053",
+    "name": "Moisturizing Lotion 7",
+    "category": "Personal Care",
+    "price": 193.23
+  },
+  {
+    "sku": "SKU-0054",
+    "name": "Bluetooth Speaker 7",
+    "category": "Electronics",
+    "price": 5.6
+  },
+  {
+    "sku": "SKU-0055",
+    "name": "Bamboo Cutting Board 7",
+    "category": "Home & Kitchen",
+    "price": 12.97
+  },
+  {
+    "sku": "SKU-0056",
+    "name": "Insulated Cooler 7",
+    "category": "Fitness & Outdoor",
+    "price": 20.34
+  },
+  {
+    "sku": "SKU-0057",
+    "name": "Avocado Hass 8",
+    "category": "Fresh Produce",
+    "price": 27.71
+  },
+  {
+    "sku": "SKU-0058",
+    "name": "Roasted Almonds 8",
+    "category": "Pantry",
+    "price": 35.08
+  },
+  {
+    "sku": "SKU-0059",
+    "name": "Green Tea 8",
+    "category": "Beverages",
+    "price": 42.45
+  },
+  {
+    "sku": "SKU-0060",
+    "name": "Microfiber Cloths 8",
+    "category": "Household",
+    "price": 49.82
+  },
+  {
+    "sku": "SKU-0061",
+    "name": "Mineral Sunscreen 8",
+    "category": "Personal Care",
+    "price": 57.19
+  },
+  {
+    "sku": "SKU-0062",
+    "name": "Wireless Mouse 8",
+    "category": "Electronics",
+    "price": 64.56
+  },
+  {
+    "sku": "SKU-0063",
+    "name": "Glass Food Jar 8",
+    "category": "Home & Kitchen",
+    "price": 71.93
+  },
+  {
+    "sku": "SKU-0064",
+    "name": "Resistance Bands 8",
+    "category": "Fitness & Outdoor",
+    "price": 79.3
+  },
+  {
+    "sku": "SKU-0065",
+    "name": "Heirloom Tomatoes 9",
+    "category": "Fresh Produce",
+    "price": 86.67
+  },
+  {
+    "sku": "SKU-0066",
+    "name": "Wildflower Honey 9",
+    "category": "Pantry",
+    "price": 94.04
+  },
+  {
+    "sku": "SKU-0067",
+    "name": "Coconut Water 9",
+    "category": "Beverages",
+    "price": 101.41
+  },
+  {
+    "sku": "SKU-0068",
+    "name": "Storage Containers 9",
+    "category": "Household",
+    "price": 108.78
+  },
+  {
+    "sku": "SKU-0069",
+    "name": "Hand Soap 9",
+    "category": "Personal Care",
+    "price": 116.15
+  },
+  {
+    "sku": "SKU-0070",
+    "name": "LED Desk Lamp 9",
+    "category": "Electronics",
+    "price": 123.52
+  },
+  {
+    "sku": "SKU-0071",
+    "name": "Cotton Apron 9",
+    "category": "Home & Kitchen",
+    "price": 130.89
+  },
+  {
+    "sku": "SKU-0072",
+    "name": "Camping Lantern 9",
+    "category": "Fitness & Outdoor",
+    "price": 138.26
+  },
+  {
+    "sku": "SKU-0073",
+    "name": "Blueberries 10",
+    "category": "Fresh Produce",
+    "price": 145.63
+  },
+  {
+    "sku": "SKU-0074",
+    "name": "Basmati Rice 10",
+    "category": "Pantry",
+    "price": 153
+  },
+  {
+    "sku": "SKU-0075",
+    "name": "Orange Juice 10",
+    "category": "Beverages",
+    "price": 160.37
+  },
+  {
+    "sku": "SKU-0076",
+    "name": "Paper Towels 10",
+    "category": "Household",
+    "price": 167.74
+  },
+  {
+    "sku": "SKU-0077",
+    "name": "Dental Floss 10",
+    "category": "Personal Care",
+    "price": 175.11
+  },
+  {
+    "sku": "SKU-0078",
+    "name": "Power Bank 10",
+    "category": "Electronics",
+    "price": 182.48
+  },
+  {
+    "sku": "SKU-0079",
+    "name": "Stainless Bottle 10",
+    "category": "Home & Kitchen",
+    "price": 189.85
+  },
+  {
+    "sku": "SKU-0080",
+    "name": "Running Cap 10",
+    "category": "Fitness & Outdoor",
+    "price": 197.22
+  },
+  {
+    "sku": "SKU-0081",
+    "name": "Organic Apples 11",
+    "category": "Fresh Produce",
+    "price": 9.59
+  },
+  {
+    "sku": "SKU-0082",
+    "name": "Extra Virgin Olive Oil 11",
+    "category": "Pantry",
+    "price": 16.96
+  },
+  {
+    "sku": "SKU-0083",
+    "name": "Sparkling Water 11",
+    "category": "Beverages",
+    "price": 24.33
+  },
+  {
+    "sku": "SKU-0084",
+    "name": "Laundry Detergent 11",
+    "category": "Household",
+    "price": 31.7
+  },
+  {
+    "sku": "SKU-0085",
+    "name": "Herbal Shampoo 11",
+    "category": "Personal Care",
+    "price": 39.07
+  },
+  {
+    "sku": "SKU-0086",
+    "name": "USB-C Charger 11",
+    "category": "Electronics",
+    "price": 46.44
+  },
+  {
+    "sku": "SKU-0087",
+    "name": "Ceramic Mug 11",
+    "category": "Home & Kitchen",
+    "price": 53.81
+  },
+  {
+    "sku": "SKU-0088",
+    "name": "Yoga Mat 11",
+    "category": "Fitness & Outdoor",
+    "price": 61.18
+  },
+  {
+    "sku": "SKU-0089",
+    "name": "Baby Spinach 12",
+    "category": "Fresh Produce",
+    "price": 68.55
+  },
+  {
+    "sku": "SKU-0090",
+    "name": "Whole Grain Pasta 12",
+    "category": "Pantry",
+    "price": 75.92
+  },
+  {
+    "sku": "SKU-0091",
+    "name": "Cold Brew Coffee 12",
+    "category": "Beverages",
+    "price": 83.29
+  },
+  {
+    "sku": "SKU-0092",
+    "name": "Dishwashing Liquid 12",
+    "category": "Household",
+    "price": 90.66
+  },
+  {
+    "sku": "SKU-0093",
+    "name": "Moisturizing Lotion 12",
+    "category": "Personal Care",
+    "price": 98.03
+  },
+  {
+    "sku": "SKU-0094",
+    "name": "Bluetooth Speaker 12",
+    "category": "Electronics",
+    "price": 105.4
+  },
+  {
+    "sku": "SKU-0095",
+    "name": "Bamboo Cutting Board 12",
+    "category": "Home & Kitchen",
+    "price": 112.77
+  },
+  {
+    "sku": "SKU-0096",
+    "name": "Insulated Cooler 12",
+    "category": "Fitness & Outdoor",
+    "price": 120.14
+  },
+  {
+    "sku": "SKU-0097",
+    "name": "Avocado Hass 13",
+    "category": "Fresh Produce",
+    "price": 127.51
+  },
+  {
+    "sku": "SKU-0098",
+    "name": "Roasted Almonds 13",
+    "category": "Pantry",
+    "price": 134.88
+  },
+  {
+    "sku": "SKU-0099",
+    "name": "Green Tea 13",
+    "category": "Beverages",
+    "price": 142.25
+  },
+  {
+    "sku": "SKU-0100",
+    "name": "Microfiber Cloths 13",
+    "category": "Household",
+    "price": 149.62
+  },
+  {
+    "sku": "SKU-0101",
+    "name": "Mineral Sunscreen 13",
+    "category": "Personal Care",
+    "price": 156.99
+  },
+  {
+    "sku": "SKU-0102",
+    "name": "Wireless Mouse 13",
+    "category": "Electronics",
+    "price": 164.36
+  },
+  {
+    "sku": "SKU-0103",
+    "name": "Glass Food Jar 13",
+    "category": "Home & Kitchen",
+    "price": 171.73
+  },
+  {
+    "sku": "SKU-0104",
+    "name": "Resistance Bands 13",
+    "category": "Fitness & Outdoor",
+    "price": 179.1
+  },
+  {
+    "sku": "SKU-0105",
+    "name": "Heirloom Tomatoes 14",
+    "category": "Fresh Produce",
+    "price": 186.47
+  },
+  {
+    "sku": "SKU-0106",
+    "name": "Wildflower Honey 14",
+    "category": "Pantry",
+    "price": 193.84
+  },
+  {
+    "sku": "SKU-0107",
+    "name": "Coconut Water 14",
+    "category": "Beverages",
+    "price": 6.21
+  },
+  {
+    "sku": "SKU-0108",
+    "name": "Storage Containers 14",
+    "category": "Household",
+    "price": 13.58
+  },
+  {
+    "sku": "SKU-0109",
+    "name": "Hand Soap 14",
+    "category": "Personal Care",
+    "price": 20.95
+  },
+  {
+    "sku": "SKU-0110",
+    "name": "LED Desk Lamp 14",
+    "category": "Electronics",
+    "price": 28.32
+  },
+  {
+    "sku": "SKU-0111",
+    "name": "Cotton Apron 14",
+    "category": "Home & Kitchen",
+    "price": 35.69
+  },
+  {
+    "sku": "SKU-0112",
+    "name": "Camping Lantern 14",
+    "category": "Fitness & Outdoor",
+    "price": 43.06
+  },
+  {
+    "sku": "SKU-0113",
+    "name": "Blueberries 15",
+    "category": "Fresh Produce",
+    "price": 50.43
+  },
+  {
+    "sku": "SKU-0114",
+    "name": "Basmati Rice 15",
+    "category": "Pantry",
+    "price": 57.8
+  },
+  {
+    "sku": "SKU-0115",
+    "name": "Orange Juice 15",
+    "category": "Beverages",
+    "price": 65.17
+  },
+  {
+    "sku": "SKU-0116",
+    "name": "Paper Towels 15",
+    "category": "Household",
+    "price": 72.54
+  },
+  {
+    "sku": "SKU-0117",
+    "name": "Dental Floss 15",
+    "category": "Personal Care",
+    "price": 79.91
+  },
+  {
+    "sku": "SKU-0118",
+    "name": "Power Bank 15",
+    "category": "Electronics",
+    "price": 87.28
+  },
+  {
+    "sku": "SKU-0119",
+    "name": "Stainless Bottle 15",
+    "category": "Home & Kitchen",
+    "price": 94.65
+  },
+  {
+    "sku": "SKU-0120",
+    "name": "Running Cap 15",
+    "category": "Fitness & Outdoor",
+    "price": 102.02
+  },
+  {
+    "sku": "SKU-0121",
+    "name": "Organic Apples 16",
+    "category": "Fresh Produce",
+    "price": 109.39
+  },
+  {
+    "sku": "SKU-0122",
+    "name": "Extra Virgin Olive Oil 16",
+    "category": "Pantry",
+    "price": 116.76
+  },
+  {
+    "sku": "SKU-0123",
+    "name": "Sparkling Water 16",
+    "category": "Beverages",
+    "price": 124.13
+  },
+  {
+    "sku": "SKU-0124",
+    "name": "Laundry Detergent 16",
+    "category": "Household",
+    "price": 131.5
+  },
+  {
+    "sku": "SKU-0125",
+    "name": "Herbal Shampoo 16",
+    "category": "Personal Care",
+    "price": 138.87
+  },
+  {
+    "sku": "SKU-0126",
+    "name": "USB-C Charger 16",
+    "category": "Electronics",
+    "price": 146.24
+  },
+  {
+    "sku": "SKU-0127",
+    "name": "Ceramic Mug 16",
+    "category": "Home & Kitchen",
+    "price": 153.61
+  },
+  {
+    "sku": "SKU-0128",
+    "name": "Yoga Mat 16",
+    "category": "Fitness & Outdoor",
+    "price": 160.98
+  },
+  {
+    "sku": "SKU-0129",
+    "name": "Baby Spinach 17",
+    "category": "Fresh Produce",
+    "price": 168.35
+  },
+  {
+    "sku": "SKU-0130",
+    "name": "Whole Grain Pasta 17",
+    "category": "Pantry",
+    "price": 175.72
+  },
+  {
+    "sku": "SKU-0131",
+    "name": "Cold Brew Coffee 17",
+    "category": "Beverages",
+    "price": 183.09
+  },
+  {
+    "sku": "SKU-0132",
+    "name": "Dishwashing Liquid 17",
+    "category": "Household",
+    "price": 190.46
+  },
+  {
+    "sku": "SKU-0133",
+    "name": "Moisturizing Lotion 17",
+    "category": "Personal Care",
+    "price": 197.83
+  },
+  {
+    "sku": "SKU-0134",
+    "name": "Bluetooth Speaker 17",
+    "category": "Electronics",
+    "price": 10.2
+  },
+  {
+    "sku": "SKU-0135",
+    "name": "Bamboo Cutting Board 17",
+    "category": "Home & Kitchen",
+    "price": 17.57
+  },
+  {
+    "sku": "SKU-0136",
+    "name": "Insulated Cooler 17",
+    "category": "Fitness & Outdoor",
+    "price": 24.94
+  },
+  {
+    "sku": "SKU-0137",
+    "name": "Avocado Hass 18",
+    "category": "Fresh Produce",
+    "price": 32.31
+  },
+  {
+    "sku": "SKU-0138",
+    "name": "Roasted Almonds 18",
+    "category": "Pantry",
+    "price": 39.68
+  },
+  {
+    "sku": "SKU-0139",
+    "name": "Green Tea 18",
+    "category": "Beverages",
+    "price": 47.05
+  },
+  {
+    "sku": "SKU-0140",
+    "name": "Microfiber Cloths 18",
+    "category": "Household",
+    "price": 54.42
+  },
+  {
+    "sku": "SKU-0141",
+    "name": "Mineral Sunscreen 18",
+    "category": "Personal Care",
+    "price": 61.79
+  },
+  {
+    "sku": "SKU-0142",
+    "name": "Wireless Mouse 18",
+    "category": "Electronics",
+    "price": 69.16
+  },
+  {
+    "sku": "SKU-0143",
+    "name": "Glass Food Jar 18",
+    "category": "Home & Kitchen",
+    "price": 76.53
+  },
+  {
+    "sku": "SKU-0144",
+    "name": "Resistance Bands 18",
+    "category": "Fitness & Outdoor",
+    "price": 83.9
+  },
+  {
+    "sku": "SKU-0145",
+    "name": "Heirloom Tomatoes 19",
+    "category": "Fresh Produce",
+    "price": 91.27
+  },
+  {
+    "sku": "SKU-0146",
+    "name": "Wildflower Honey 19",
+    "category": "Pantry",
+    "price": 98.64
+  },
+  {
+    "sku": "SKU-0147",
+    "name": "Coconut Water 19",
+    "category": "Beverages",
+    "price": 106.01
+  },
+  {
+    "sku": "SKU-0148",
+    "name": "Storage Containers 19",
+    "category": "Household",
+    "price": 113.38
+  },
+  {
+    "sku": "SKU-0149",
+    "name": "Hand Soap 19",
+    "category": "Personal Care",
+    "price": 120.75
+  },
+  {
+    "sku": "SKU-0150",
+    "name": "LED Desk Lamp 19",
+    "category": "Electronics",
+    "price": 128.12
+  },
+  {
+    "sku": "SKU-0151",
+    "name": "Cotton Apron 19",
+    "category": "Home & Kitchen",
+    "price": 135.49
+  },
+  {
+    "sku": "SKU-0152",
+    "name": "Camping Lantern 19",
+    "category": "Fitness & Outdoor",
+    "price": 142.86
+  },
+  {
+    "sku": "SKU-0153",
+    "name": "Blueberries 20",
+    "category": "Fresh Produce",
+    "price": 150.23
+  },
+  {
+    "sku": "SKU-0154",
+    "name": "Basmati Rice 20",
+    "category": "Pantry",
+    "price": 157.6
+  },
+  {
+    "sku": "SKU-0155",
+    "name": "Orange Juice 20",
+    "category": "Beverages",
+    "price": 164.97
+  },
+  {
+    "sku": "SKU-0156",
+    "name": "Paper Towels 20",
+    "category": "Household",
+    "price": 172.34
+  },
+  {
+    "sku": "SKU-0157",
+    "name": "Dental Floss 20",
+    "category": "Personal Care",
+    "price": 179.71
+  },
+  {
+    "sku": "SKU-0158",
+    "name": "Power Bank 20",
+    "category": "Electronics",
+    "price": 187.08
+  },
+  {
+    "sku": "SKU-0159",
+    "name": "Stainless Bottle 20",
+    "category": "Home & Kitchen",
+    "price": 194.45
+  },
+  {
+    "sku": "SKU-0160",
+    "name": "Running Cap 20",
+    "category": "Fitness & Outdoor",
+    "price": 6.82
+  },
+  {
+    "sku": "SKU-0161",
+    "name": "Organic Apples 21",
+    "category": "Fresh Produce",
+    "price": 14.19
+  },
+  {
+    "sku": "SKU-0162",
+    "name": "Extra Virgin Olive Oil 21",
+    "category": "Pantry",
+    "price": 21.56
+  },
+  {
+    "sku": "SKU-0163",
+    "name": "Sparkling Water 21",
+    "category": "Beverages",
+    "price": 28.93
+  },
+  {
+    "sku": "SKU-0164",
+    "name": "Laundry Detergent 21",
+    "category": "Household",
+    "price": 36.3
+  },
+  {
+    "sku": "SKU-0165",
+    "name": "Herbal Shampoo 21",
+    "category": "Personal Care",
+    "price": 43.67
+  },
+  {
+    "sku": "SKU-0166",
+    "name": "USB-C Charger 21",
+    "category": "Electronics",
+    "price": 51.04
+  },
+  {
+    "sku": "SKU-0167",
+    "name": "Ceramic Mug 21",
+    "category": "Home & Kitchen",
+    "price": 58.41
+  },
+  {
+    "sku": "SKU-0168",
+    "name": "Yoga Mat 21",
+    "category": "Fitness & Outdoor",
+    "price": 65.78
+  },
+  {
+    "sku": "SKU-0169",
+    "name": "Baby Spinach 22",
+    "category": "Fresh Produce",
+    "price": 73.15
+  },
+  {
+    "sku": "SKU-0170",
+    "name": "Whole Grain Pasta 22",
+    "category": "Pantry",
+    "price": 80.52
+  },
+  {
+    "sku": "SKU-0171",
+    "name": "Cold Brew Coffee 22",
+    "category": "Beverages",
+    "price": 87.89
+  },
+  {
+    "sku": "SKU-0172",
+    "name": "Dishwashing Liquid 22",
+    "category": "Household",
+    "price": 95.26
+  },
+  {
+    "sku": "SKU-0173",
+    "name": "Moisturizing Lotion 22",
+    "category": "Personal Care",
+    "price": 102.63
+  },
+  {
+    "sku": "SKU-0174",
+    "name": "Bluetooth Speaker 22",
+    "category": "Electronics",
+    "price": 110
+  },
+  {
+    "sku": "SKU-0175",
+    "name": "Bamboo Cutting Board 22",
+    "category": "Home & Kitchen",
+    "price": 117.37
+  },
+  {
+    "sku": "SKU-0176",
+    "name": "Insulated Cooler 22",
+    "category": "Fitness & Outdoor",
+    "price": 124.74
+  },
+  {
+    "sku": "SKU-0177",
+    "name": "Avocado Hass 23",
+    "category": "Fresh Produce",
+    "price": 132.11
+  },
+  {
+    "sku": "SKU-0178",
+    "name": "Roasted Almonds 23",
+    "category": "Pantry",
+    "price": 139.48
+  },
+  {
+    "sku": "SKU-0179",
+    "name": "Green Tea 23",
+    "category": "Beverages",
+    "price": 146.85
+  },
+  {
+    "sku": "SKU-0180",
+    "name": "Microfiber Cloths 23",
+    "category": "Household",
+    "price": 154.22
+  },
+  {
+    "sku": "SKU-0181",
+    "name": "Mineral Sunscreen 23",
+    "category": "Personal Care",
+    "price": 161.59
+  },
+  {
+    "sku": "SKU-0182",
+    "name": "Wireless Mouse 23",
+    "category": "Electronics",
+    "price": 168.96
+  },
+  {
+    "sku": "SKU-0183",
+    "name": "Glass Food Jar 23",
+    "category": "Home & Kitchen",
+    "price": 176.33
+  },
+  {
+    "sku": "SKU-0184",
+    "name": "Resistance Bands 23",
+    "category": "Fitness & Outdoor",
+    "price": 183.7
+  },
+  {
+    "sku": "SKU-0185",
+    "name": "Heirloom Tomatoes 24",
+    "category": "Fresh Produce",
+    "price": 191.07
+  },
+  {
+    "sku": "SKU-0186",
+    "name": "Wildflower Honey 24",
+    "category": "Pantry",
+    "price": 198.44
+  },
+  {
+    "sku": "SKU-0187",
+    "name": "Coconut Water 24",
+    "category": "Beverages",
+    "price": 10.81
+  },
+  {
+    "sku": "SKU-0188",
+    "name": "Storage Containers 24",
+    "category": "Household",
+    "price": 18.18
+  },
+  {
+    "sku": "SKU-0189",
+    "name": "Hand Soap 24",
+    "category": "Personal Care",
+    "price": 25.55
+  },
+  {
+    "sku": "SKU-0190",
+    "name": "LED Desk Lamp 24",
+    "category": "Electronics",
+    "price": 32.92
+  },
+  {
+    "sku": "SKU-0191",
+    "name": "Cotton Apron 24",
+    "category": "Home & Kitchen",
+    "price": 40.29
+  },
+  {
+    "sku": "SKU-0192",
+    "name": "Camping Lantern 24",
+    "category": "Fitness & Outdoor",
+    "price": 47.66
+  },
+  {
+    "sku": "SKU-0193",
+    "name": "Blueberries 25",
+    "category": "Fresh Produce",
+    "price": 55.03
+  },
+  {
+    "sku": "SKU-0194",
+    "name": "Basmati Rice 25",
+    "category": "Pantry",
+    "price": 62.4
+  },
+  {
+    "sku": "SKU-0195",
+    "name": "Orange Juice 25",
+    "category": "Beverages",
+    "price": 69.77
+  },
+  {
+    "sku": "SKU-0196",
+    "name": "Paper Towels 25",
+    "category": "Household",
+    "price": 77.14
+  },
+  {
+    "sku": "SKU-0197",
+    "name": "Dental Floss 25",
+    "category": "Personal Care",
+    "price": 84.51
+  },
+  {
+    "sku": "SKU-0198",
+    "name": "Power Bank 25",
+    "category": "Electronics",
+    "price": 91.88
+  },
+  {
+    "sku": "SKU-0199",
+    "name": "Stainless Bottle 25",
+    "category": "Home & Kitchen",
+    "price": 99.25
+  },
+  {
+    "sku": "SKU-0200",
+    "name": "Running Cap 25",
+    "category": "Fitness & Outdoor",
+    "price": 106.62
+  }
+]

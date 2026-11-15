@@ -1,0 +1,149 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "ABC Retail Integration API",
+    "version": "1.0.0",
+    "description": "Phase 2 integration APIs. Public inventory requests use the Process API; WMS remains behind the integration layer."
+  },
+  "servers": [{ "url": "/" }],
+  "paths": {
+    "/api/v1/inventory/{sku}": {
+      "get": {
+        "operationId": "getInventoryBySku",
+        "summary": "Look up current inventory for a SKU",
+        "parameters": [
+          {
+            "name": "sku",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "minLength": 1, "maxLength": 100 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inventory found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "data"],
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "object",
+                      "required": ["sku", "availableQuantity"],
+                      "properties": {
+                        "sku": { "type": "string", "example": "SKU123" },
+                        "availableQuantity": { "type": "integer", "minimum": 0, "example": 50 }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": { "sku": "SKU123", "availableQuantity": 50 }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" },
+          "504": { "$ref": "#/components/responses/GatewayTimeout" }
+        }
+      }
+    },
+    "/api/v1/orders": {
+      "post": {
+        "operationId": "createOrder",
+        "summary": "Accept an order for asynchronous processing",
+        "description": "Persists the order and outbox event before returning. Payment, WMS and notification consumers process the event independently.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["customerId", "items"],
+                "properties": {
+                  "customerId": { "type": "string", "minLength": 1 },
+                  "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": ["sku", "quantity"],
+                      "properties": {
+                        "sku": { "type": "string", "minLength": 1 },
+                        "quantity": { "type": "integer", "minimum": 1 }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "customerId": "customer-1001",
+                "items": [{ "sku": "SKU123", "quantity": 2 }]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Order durably accepted for asynchronous processing",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": { "orderId": "9be0ef0a-5c0d-4c0d-a4b3-e7c2d74d13a0", "status": "accepted" }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "Check integration API availability",
+        "responses": {
+          "200": {
+            "description": "Service is running",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "status": "ok" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request",
+        "content": { "application/json": { "example": { "success": false, "error": { "code": "INVALID_SKU", "message": "Invalid SKU" } } } }
+      },
+      "NotFound": {
+        "description": "SKU or route not found",
+        "content": { "application/json": { "example": { "success": false, "error": { "code": "SKU_NOT_FOUND", "message": "SKU was not found" } } } }
+      },
+      "BadGateway": {
+        "description": "WMS returned invalid data",
+        "content": { "application/json": { "example": { "success": false, "error": { "code": "WMS_INVALID_RESPONSE", "message": "WMS returned invalid inventory data" } } } }
+      },
+      "ServiceUnavailable": {
+        "description": "WMS is unavailable",
+        "content": { "application/json": { "example": { "success": false, "error": { "code": "WMS_UNAVAILABLE", "message": "The request could not be completed" } } } }
+      },
+      "GatewayTimeout": {
+        "description": "WMS request timed out",
+        "content": { "application/json": { "example": { "success": false, "error": { "code": "WMS_TIMEOUT", "message": "The request could not be completed" } } } }
+      }
+    }
+  }
+}
