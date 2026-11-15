@@ -1,109 +1,313 @@
 # ABC Retail System Integration - Phase 2
 
-Local demonstration of synchronous, asynchronous, and batch integration using the Phase 1 architecture: Kong Gateway, a Node.js/Express integration layer, RabbitMQ, WMS and E-commerce endpoints.
+Local demonstration of synchronous, asynchronous, and batch integration patterns for the ABC Retail case study.
+
+## Contents
+
+- [Project overview](#project-overview)
+- [Architecture](#architecture)
+- [Phase 2 integration patterns](#phase-2-integration-patterns)
+  - [Synchronous inventory lookup](#1-synchronous-inventory-lookup)
+  - [Asynchronous order processing](#2-asynchronous-order-processing)
+  - [Batch product integration](#3-batch-product-integration)
+- [Technology stack](#technology-stack)
+- [Project structure](#project-structure)
+- [Installation and configuration](#installation-and-configuration)
+- [API documentation and local checks](#api-documentation-and-local-checks)
+- [Implementation status and limitations](#implementation-status-and-limitations)
+- [Automated tests](#automated-tests)
+
+## Project overview
+
+ABC Retail has stores and an e-commerce channel that need to exchange inventory, order, and product data with business systems such as CRM, WMS, POS, and TMS. This project demonstrates a Phase 2 integration layer; it is not a complete implementation of every ABC Retail system.
+
+The code currently provides:
+
+- An Express Process API for inventory lookup and order acceptance.
+- A WMS inventory adapter with an in-process mock mode and an HTTP mode.
+- RabbitMQ publishing and independent Payment, WMS, and Notification event consumers.
+- A file-based order outbox and local consumer-event deduplication.
+- A product batch job that posts to a configured REST endpoint.
+- OpenAPI documentation and a declarative Kong configuration.
+
+CRM, POS, TMS, and the e-commerce application are not implemented as services in this repository. Payment processing, WMS reservation, and customer notifications are simulated by logging; the consumers do not call payment, warehouse, Zalo, or email systems.
 
 ## Architecture
 
+The design combines API-led connectivity for request/response APIs with event-driven messaging for order processing:
+
 ```text
-Client -> Kong -> Inventory Process API -> WMS System API adapter
-E-commerce -> Order API -> durable JSON outbox -> RabbitMQ topic exchange
-                                                   ├─ Payment consumer
-                                                   ├─ WMS consumer -> bounded retry queue -> WMS DLQ
-                                                   └─ Notification consumer
-Product source -> batch scheduler/CLI -> E-commerce REST endpoint
+Inventory client -> (optional) Kong -> Inventory Process API -> WMS System API adapter
+E-commerce client -> Order API -> JSON outbox -> RabbitMQ -> Payment / WMS / Notification consumers
+Product file (CSV or JSON) -> batch scheduler or CLI -> configured product REST target
 ```
 
-The inventory Process API is the only public route for stock lookup; the WMS adapter is internal to the integration layer. `WMS_MODE=mock` enables a small in-process adapter for a few sample SKUs. Set `WMS_MODE=http` to call a WMS System API that returns `{ "sku": "...", "availableQuantity": 0 }` from `GET {WMS_BASE_URL}/inventory/{sku}`.
+The public inventory route is the Process API. Clients do not call the WMS adapter directly. `kong/kong.yml` provides a DB-less Kong service and route for `/api/v1`; the backend can also be called directly on its configured port.
 
-Order persistence and consumer deduplication use atomic local JSON file replacement under `STATE_DIR`. This is intended for a single-instance classroom demo, not multi-instance or production deployment. Payment, WMS reservation and notification consumers currently log/mock their downstream action; they have separate RabbitMQ queues and channels. The outbox remains pending if RabbitMQ is unavailable and is retried after reconnect. RabbitMQ publisher confirms and persistent queues/messages are enabled.
+## Phase 2 integration patterns
 
-For WMS consumer failures, each failure is sent to a durable retry queue with a configurable TTL (`WMS_RETRY_DELAY_MS`). It returns to the WMS queue through a dedicated retry exchange and does not re-broadcast to the other consumers. `x-retry-count` allows three retries after the initial attempt; the fourth failed attempt is copied to `wms.order-created.dlq` and the original is acknowledged only after the copy is confirmed. Payment and notification failures go to their own DLQs without retry. A failed consumer is isolated to its own channel.
+### 1. Synchronous inventory lookup
 
-Batch delivery posts `{ runId, batchNumber, products }` and considers any 2xx response successful. Failed payloads are durably saved under `STATE_DIR/batch-failures` for manual replay. The target should use `runId` and `batchNumber` as an idempotency key if it can receive a request but its response is lost.
+The inventory request path is:
 
-## Requirements and setup
+```text
+Client -> Kong API Gateway -> Inventory Process API -> WMS System API adapter
+```
 
-- Node.js 20+ and npm.
-- RabbitMQ for order event delivery (enable the Management plugin to inspect queues, retries and DLQs).
-- Kong Gateway for gateway proxy and rate-limit verification.
-- A WMS System API and E-commerce product batch endpoint for non-mock integration.
+- Endpoint: `GET /api/v1/inventory/{sku}`
+- OpenAPI 3.0.3 definition: `openapi/openapi.json`
+- Swagger UI: `/docs`
+- Health check: `/health`
+- Successful response: `{ "success": true, "data": { "sku": "...", "availableQuantity": 50 } }`
+- The adapter supports `WMS_MODE=mock` for three sample SKUs, or `WMS_MODE=http` to call `{WMS_BASE_URL}/inventory/{sku}`.
+- Invalid SKUs return 400; missing SKUs return 404; invalid WMS responses return 502; unavailable WMS and request timeouts return 503 and 504 respectively.
 
-RabbitMQ, Kong and Docker were not installed in the inspected environment. They are intentionally not bundled or installed by this project. The API can start without RabbitMQ and keep new orders in its local outbox, but event delivery, the Kong rate limit, and external E-commerce delivery require their respective services.
+Kong configuration applies the OSS `rate-limiting` plugin at 100 requests per minute per client IP using the local policy. This limit applies when traffic passes through Kong, not when clients call Express directly. The repository contains the declarative Kong file, not a Kong deployment.
+
+### 2. Asynchronous order processing
+
+`POST /api/v1/orders` validates the request, persists the order and an `order.created` outbox event, and returns `202 Accepted`. The publisher sends the event to RabbitMQ with persistent delivery and publisher confirms. The outbox entry is marked published after confirmation; if RabbitMQ is unavailable, the event remains pending for a later connection/reconnect attempt.
+
+The runtime declares three durable exchanges:
+
+| Exchange | Type | Purpose |
+| --- | --- | --- |
+| `abc.events` | topic | Routes `order.created` to the three consumer queues |
+| `abc.dead-letter` | direct | Routes failed messages to consumer-specific DLQs |
+| `abc.wms.retry` | direct | Routes expired WMS retry messages back to the WMS queue |
+
+Each consumer has its own queue and channel:
+
+| Consumer | Main queue | Failure destination |
+| --- | --- | --- |
+| Payment | `payment.order-created` | `payment.order-created.dlq` |
+| WMS | `wms.order-created` | `wms.order-created.retry`, then `wms.order-created.dlq` |
+| Notification | `notification.order-created` | `notification.order-created.dlq` |
+
+The three main queues bind to `abc.events` with routing key `order.created`. Each consumer acknowledges a successfully processed event. Successful event IDs are stored locally to avoid repeating the simulated action on redelivery. Payment and Notification failures go directly to their own DLQs; they do not use the WMS retry queue.
+
+#### WMS retry and DLQ
+
+- `WMS_RETRY_DELAY_MS` sets the retry queue TTL; the default is **5000 ms**.
+- The policy allows **3 retries after the initial attempt**: at most **4 processing attempts**.
+- After each of the first three failures, the event is republished to `wms.order-created.retry` with an incremented `x-retry-count`. On TTL expiry, RabbitMQ dead-letters it back to `wms.order-created` through `abc.wms.retry`.
+- If the fourth attempt also fails, the event is sent to `wms.order-created.dlq`.
+- The failed original is acknowledged only after the retry/DLQ copy is publisher-confirmed. If routing fails, the original is negatively acknowledged and requeued.
+- Set `WMS_FAIL_SKU` to a SKU to simulate a WMS reservation failure for orders containing that exact SKU. This setting is read at Backend startup; restart the Backend after changing it. It affects the asynchronous WMS handler, not the synchronous inventory mock.
+
+### 3. Batch product integration
+
+The batch job reads a JSON or CSV product array from `BATCH_INPUT_FILE` and sends it to `BATCH_TARGET_URL` as REST requests:
+
+```json
+{
+  "runId": "...",
+  "batchNumber": 1,
+  "products": []
+}
+```
+
+- Each request contains at most 100 products.
+- Any 2xx target response counts as a successful batch.
+- A failed batch payload is saved under `STATE_DIR/batch-failures`; later batches continue.
+- Run saved failures again with `npm run batch:run -- retry`. A saved file is removed after a successful replay.
+- The separate scheduler uses `0 0 * * *` (midnight) in `BATCH_CRON_TIMEZONE`, which defaults to `Asia/Ho_Chi_Minh`. It skips an overlapping run.
+- `data/products.json` is the included sample input. No E-commerce batch receiver is included; configure a reachable REST target before running the batch.
+
+## Technology stack
+
+| Technology | Use |
+| --- | --- |
+| Node.js 20+ and JavaScript | Backend and batch runtime |
+| Express.js | HTTP APIs |
+| RabbitMQ and `amqplib` | Order events, confirms, queues, acknowledgements, retry, and DLQ |
+| Kong Gateway | Optional API gateway, configured in `kong/kong.yml` |
+| OpenAPI 3.0.3 and `swagger-ui-express` | API contract and interactive documentation |
+| `dotenv` | Load local environment configuration |
+| `node-cron` | Daily batch schedule |
+| `csv-parse` | CSV product input |
+| Node.js built-ins | Fetch, filesystem, crypto, logging, and test runner |
+
+The repository does not include a Dockerfile or Docker Compose file. RabbitMQ and Kong are external services that must be provisioned separately.
+
+## Project structure
+
+```text
+.
+├── data/
+│   └── products.json             # Sample batch input
+├── kong/
+│   └── kong.yml                  # DB-less Kong service, route, and rate limit
+├── openapi/
+│   └── openapi.json              # OpenAPI contract
+├── src/
+│   ├── batch/                    # Reader, batching, REST sender, CLI, scheduler
+│   ├── controllers/              # HTTP request handlers
+│   ├── integrations/wms/         # Synchronous inventory adapter
+│   ├── messaging/                # RabbitMQ topology, consumers, retry policy/runtime
+│   ├── repositories/             # JSON order, outbox, and consumer-event stores
+│   ├── routes/                   # Inventory and order routes
+│   ├── services/                 # Inventory, order, and outbox services
+│   ├── app.js                    # Express app and API documentation routes
+│   ├── config.js                 # Environment loading and configuration
+│   └── server.js                 # Backend startup and RabbitMQ runtime
+├── state/                        # Local runtime state; ignored by Git
+├── tests/                        # Node.js automated tests
+├── .env.example                  # Safe local configuration defaults
+├── package.json
+└── README.md
+```
+
+## Installation and configuration
+
+### Requirements
+
+- Node.js 20 or later and npm.
+- RabbitMQ for order event delivery.
+- Kong only if testing the gateway route and rate limit.
+- A reachable WMS System API only when using `WMS_MODE=http`.
+- A reachable product REST receiver only when running batch delivery.
+
+### Install
 
 ```powershell
-Copy-Item .env.example .env
+git clone <repository-url>
+Set-Location CodeDemo_SE445C
 npm install
-npm test
+Copy-Item .env.example .env
+```
+
+Replace `<repository-url>` with the URL for your repository. Keep `.env` local and do not commit credentials.
+
+### Environment variables
+
+| Variable | Default | Required when / purpose |
+| --- | --- | --- |
+| `PORT` | `3000` | HTTP port |
+| `LOG_LEVEL` | `info` | Logging verbosity |
+| `WMS_MODE` | `mock` | `mock` or `http` for synchronous inventory lookup |
+| `WMS_BASE_URL` | `http://127.0.0.1:3100/api/v1` | Required for a reachable WMS when `WMS_MODE=http` |
+| `WMS_TIMEOUT_MS` | `3000` | Synchronous WMS request timeout |
+| `RABBITMQ_URL` | `amqp://localhost:5672` | Set to the broker URL for asynchronous delivery |
+| `RABBITMQ_RECONNECT_MS` | `3000` | RabbitMQ reconnect delay |
+| `WMS_RETRY_DELAY_MS` | `5000` | WMS retry queue TTL |
+| `WMS_FAIL_SKU` | empty | Optional exact-match WMS failure simulation for testing |
+| `STATE_DIR` | `state` | Local JSON state directory |
+| `BATCH_INPUT_FILE` | `data/products.json` | CSV or JSON product input |
+| `BATCH_TARGET_URL` | empty in code; local URL in `.env.example` | Set to a reachable batch receiver before running batch |
+| `BATCH_TIMEOUT_MS` | `10000` | Batch HTTP timeout |
+| `BATCH_CRON_TIMEZONE` | `Asia/Ho_Chi_Minh` | Time zone for the midnight schedule |
+
+`dotenv` loads `.env` from the process working directory. If RabbitMQ requires authentication, configure `RABBITMQ_URL` with the credentials for your broker in the local `.env`; URL-encode reserved characters in credentials. Do not copy real credentials into this README or `.env.example`.
+
+### RabbitMQ and Kong
+
+The project does not start or configure containers. Start RabbitMQ separately and make AMQP port `5672` reachable. Enable its Management plugin and expose port `15672` if you want to inspect exchanges, queues, and DLQs. Configure the local broker credentials and matching `RABBITMQ_URL` outside source control.
+
+For a new local broker only, an illustrative Docker command is:
+
+```powershell
+docker run -d --name abc-rabbitmq `
+  -p 5672:5672 -p 15672:15672 `
+  -e RABBITMQ_DEFAULT_USER=local_dev `
+  -e RABBITMQ_DEFAULT_PASS=replace-with-a-local-password `
+  rabbitmq:management
+```
+
+Replace the sample password with a local-only value and configure the same credentials in `.env`; URL-encode reserved characters in `RABBITMQ_URL`. The root vhost `/` is represented as `%2F` in the URL path. Do not run this command if a broker container with that name already exists. The repository does not pin or manage the RabbitMQ image version.
+
+For Kong, load `kong/kong.yml` in a DB-less Kong deployment. The file routes `/api/v1` to `http://127.0.0.1:3000` and configures the local per-IP rate limit. No Kong runtime is bundled.
+
+### Start services
+
+```powershell
 npm start
 ```
 
-`RABBITMQ_URL` should point to a local or reachable RabbitMQ instance. For remote use, provide credentials via the environment rather than committing them to `.env.example` or source control. The included sample URL is for an unauthenticated localhost URL; configure it to match the local broker's credentials/access policy.
+The Backend starts the HTTP API and attempts RabbitMQ connection/reconnection. The API can start while RabbitMQ is unavailable, but orders will remain in the local outbox until publishing succeeds. Check the `RabbitMQ connected and consumers are ready` log and broker consumer counts before relying on event delivery.
 
-## Synchronous inventory API
-
-- `GET http://localhost:3000/api/v1/inventory/SKU123`
-- `GET http://localhost:3000/docs` — Swagger UI
-- `GET http://localhost:3000/openapi.json` — OpenAPI 3.0 document
-- `GET http://localhost:3000/health`
-
-In mock mode, `SKU123` returns 50 units, `SKU-LOW-STOCK` returns 2, and `SKU-OUT-OF-STOCK` returns 0. Unknown SKUs return 404. HTTP WMS timeouts return 504; unavailable WMS and invalid WMS responses return explicit 503/502 errors.
-
-`kong/kong.yml` is a Kong DB-less declarative configuration. It proxies `/api/v1` to the Process API at `127.0.0.1:3000` and applies the OSS `rate-limiting` plugin at the service: 100 requests per minute per client IP using the local policy. This policy is appropriate for a single local Kong node; a multi-node deployment needs a shared rate-limit policy. Load this file as Kong's declarative config with `database=off`, then call the same inventory URL through Kong's proxy listener. `/docs` is currently served directly by the integration API.
-
-## Asynchronous order API
-
-```powershell
-Invoke-RestMethod -Method Post `
-  -Uri http://localhost:3000/api/v1/orders `
-  -ContentType 'application/json' `
-  -Body '{"customerId":"customer-1001","items":[{"sku":"SKU123","quantity":2}]}'
-```
-
-The response is `202 Accepted` after the order and `order.created` outbox event have been persisted. Queue topology:
-
-| Consumer | Queue | Failure destination |
-| --- | --- | --- |
-| Payment | `payment.order-created` | `payment.order-created.dlq` |
-| WMS | `wms.order-created` | retry queue `wms.order-created.retry`, then `wms.order-created.dlq` |
-| Notification | `notification.order-created` | `notification.order-created.dlq` |
-
-Inspect the queues and message rates using RabbitMQ Management. To demonstrate WMS retry/DLQ, set `WMS_FAIL_SKU=SKU123`, restart the API, submit an order containing `SKU123`, and wait for the configured retry delays. It will be sent to the WMS DLQ after four failed attempts total. Remove the setting to resume normal mock processing. The `x-retry-count` header is bounded at 3; no retry queue routes back to the general event exchange.
-
-## Batch product integration
-
-`data/products.json` contains 200 sample records. Set `BATCH_TARGET_URL` to a REST receiver accepting `POST` requests with `{ runId, batchNumber, products }`.
-
-Run a batch immediately:
-
-```powershell
-npm run batch:run
-```
-
-Replay persisted failures after the receiver is available:
-
-```powershell
-npm run batch:run -- retry
-```
-
-Run the scheduler as a separate process; it executes daily at midnight in `BATCH_CRON_TIMEZONE` (default `Asia/Ho_Chi_Minh`):
+The batch scheduler is a separate process:
 
 ```powershell
 npm run batch:scheduler
 ```
 
-Each request contains at most 100 records. A failed batch is saved in `state/batch-failures` and later batches continue. The run command exits unsuccessfully if any batch failed; the saved payload is retained until a retry succeeds.
+## API documentation and local checks
 
-## Dependencies
+### Endpoints
 
-- `express`: API routing and HTTP server.
-- `amqplib`: RabbitMQ connections, channels, confirms, acknowledgements and queue topology.
-- `node-cron`: local daily batch schedule.
-- `csv-parse`: CSV parsing with quoted fields and escaped values.
-- `swagger-ui-express`: interactive OpenAPI documentation.
-- `dotenv`: local `.env` loading.
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/health` | Backend health |
+| `GET` | `/api/v1/inventory/{sku}` | Inventory lookup through the Process API |
+| `POST` | `/api/v1/orders` | Persist and accept an order for asynchronous processing |
+| `GET` | `/openapi.json` | OpenAPI document |
+| `GET` | `/docs` | Swagger UI |
 
-The implementation uses built-in Node.js `fetch`, filesystem, crypto and test runner rather than extra HTTP, logging, UUID or testing dependencies.
+The Order API validates a non-empty `customerId` string and at least one item with a valid SKU and positive integer quantity. It does not look up the customer in a CRM or customer registry.
 
-## Validation status
+### Check the API
 
-`npm test` covers inventory success/not-found/WMS timeout/invalid data, order acceptance and durable outbox behavior, consumer deduplication, bounded retry decisions, CSV/JSON reading, 100-record batching, REST delivery, and failed-batch replay. RabbitMQ, Kong rate limiting, and the actual daily midnight execution still require those external services/runtimes and should not be considered end-to-end verified until run in an environment that provides them.
+Run the unit/integration test suite:
+
+```powershell
+npm test
+```
+
+Check health and synchronous inventory in mock mode:
+
+```powershell
+Invoke-RestMethod -Uri http://localhost:3000/health
+Invoke-RestMethod -Uri http://localhost:3000/api/v1/inventory/SKU123
+```
+
+To submit an order, provide an approved non-production customer identifier when prompted. This command creates persistent local order/outbox state and, when RabbitMQ is connected, publishes an event:
+
+```powershell
+$customerId = Read-Host "Customer ID for this test"
+$body = @{
+  customerId = $customerId
+  items = @(@{ sku = "SKU123"; quantity = 1 })
+} | ConvertTo-Json -Depth 4
+
+Invoke-RestMethod -Method Post `
+  -Uri http://localhost:3000/api/v1/orders `
+  -ContentType "application/json" `
+  -Body $body
+```
+
+To observe WMS retry/DLQ, configure `WMS_FAIL_SKU` to the same test SKU in local `.env`, restart the Backend, and submit one controlled test order containing that SKU. Inspect the retry/DLQ queues in RabbitMQ Management. Do not use production order or customer data.
+
+Run batch delivery manually after configuring a reachable `BATCH_TARGET_URL`:
+
+```powershell
+npm run batch:run
+```
+
+Replay persisted failures:
+
+```powershell
+npm run batch:run -- retry
+```
+
+## Implementation status and limitations
+
+| Area | Implemented | Status and boundary |
+| --- | --- | --- |
+| Inventory API | Express route, validation, OpenAPI/Swagger, WMS adapter, Kong configuration | WMS mock and HTTP adapter exist. Kong's live rate limit depends on an external Kong deployment. |
+| Order integration | Order API, JSON outbox, RabbitMQ publisher confirms, three independent queues/consumers, ACK/NACK, deduplication, retry, and DLQ | Payment, WMS reservation, and Notification handlers currently log/simulate downstream actions; they do not integrate with external business systems. |
+| Product batch | CSV/JSON input, batches up to 100, REST delivery, persisted failure payloads, manual replay, cron scheduler | A target receiver must be supplied. The scheduler is separate from `npm start`. |
+| Other ABC Retail systems | Not included | CRM, POS, TMS, external Payment, real WMS order reservation, email/Zalo delivery, and the E-commerce receiver are not implemented here. |
+| Deployment and security | Not included | No Dockerfile, Compose deployment, authentication, or production multi-instance persistence is provided. JSON state is intended for a single-instance classroom demo. |
+
+The automated tests use local test doubles and temporary HTTP servers; they do not prove a live Kong deployment or external business-system integration. A controlled local RabbitMQ run on 2026-11-15 verified order publication, Payment and Notification acknowledgements, and WMS retry/DLQ behavior: four failed WMS attempts, three retries at the configured 5-second delay, and one message in the WMS DLQ. This is an environment-specific manual check, not a guarantee about another broker or configuration. The actual midnight scheduler execution and Kong rate limiting were not verified as live deployments.
+
+## Automated tests
+
+`npm test` uses the built-in Node.js test runner and covers:
+
+- Inventory success, missing SKU, invalid WMS data, and timeout mapping.
+- Order acceptance, outbox persistence, outbox failure behavior, consumer deduplication, and the bounded retry policy.
+- CSV/JSON product loading, splitting 200 records into two batches of 100, sample catalog validation, REST delivery, and failed-batch replay.
+
+These tests do not start a live RabbitMQ broker, Kong, WMS, CRM, Payment, Notification, or E-commerce service.
