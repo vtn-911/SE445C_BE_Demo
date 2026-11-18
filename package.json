@@ -9,7 +9,9 @@
     "dev": "node --watch src/server.js",
     "test": "node --test",
     "batch:run": "node src/batch/cli.js",
-    "batch:scheduler": "node src/batch/scheduler.js"
+    "batch:scheduler": "node src/batch/scheduler.js",
+    "mock:wms": "node src/mocks/wms/server.js",
+    "mock:tms": "node src/mocks/tms/server.js"
   },
   "engines": {
     "node": ">=20"

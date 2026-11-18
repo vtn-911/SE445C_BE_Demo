@@ -50,6 +50,67 @@ test('inventory Process API reports a missing SKU', async () => {
   });
 });
 
+test('product stock API resolves the Product ID to its catalog SKU', async () => {
+  const requestedSkus = [];
+  const app = createApp({
+    inventoryService: new InventoryService({
+      getInventory: async (sku) => {
+        requestedSkus.push(sku);
+        return { sku, availableQuantity: 50 };
+      }
+    })
+  });
+
+  await withServer(app, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/v1/products/SKU-0001/stock`);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      success: true,
+      data: {
+        productId: 'SKU-0001',
+        sku: 'SKU-0001',
+        availableQuantity: 50
+      }
+    });
+    assert.deepEqual(requestedSkus, ['SKU-0001']);
+  });
+});
+
+test('product stock API returns 404 without calling WMS for an unknown Product ID', async () => {
+  let inventoryLookups = 0;
+  const app = createApp({
+    inventoryService: new InventoryService({
+      getInventory: async () => {
+        inventoryLookups += 1;
+        return { sku: 'UNKNOWN', availableQuantity: 0 };
+      }
+    })
+  });
+
+  await withServer(app, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/v1/products/UNKNOWN/stock`);
+    assert.equal(response.status, 404);
+    assert.equal((await response.json()).error.code, 'PRODUCT_NOT_FOUND');
+    assert.equal(inventoryLookups, 0);
+  });
+});
+
+test('product stock API preserves WMS not-found errors for a catalog Product ID', async () => {
+  const app = createApp({
+    inventoryService: new InventoryService({
+      getInventory: async () => {
+        throw new WmsIntegrationError(404, 'SKU_NOT_FOUND', 'Missing SKU');
+      }
+    })
+  });
+
+  await withServer(app, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/api/v1/products/SKU-0001/stock`);
+    assert.equal(response.status, 404);
+    assert.equal((await response.json()).error.code, 'SKU_NOT_FOUND');
+  });
+});
+
 test('HTTP WMS adapter rejects malformed inventory data', async () => {
   const adapter = new InventoryAdapter({
     mode: 'http',

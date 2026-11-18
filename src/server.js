@@ -6,13 +6,19 @@ const { OrdersRepository } = require('./repositories/orders-repository');
 const { OrderService } = require('./services/order-service');
 const { OutboxPublisher } = require('./services/outbox-publisher');
 const { RabbitMqRuntime } = require('./messaging/rabbitmq-runtime');
+const { InventoryAdapter } = require('./integrations/wms/inventory-adapter');
+const { InventoryService } = require('./services/inventory-service');
+const { TmsShipmentAdapter } = require('./integrations/tms/shipment-adapter');
 
 const ordersRepository = new OrdersRepository(path.resolve(config.stateDir));
+const inventoryService = new InventoryService(new InventoryAdapter(config.wms));
+const tmsAdapter = new TmsShipmentAdapter(config.tms);
 const rabbitmq = new RabbitMqRuntime({
   ...config.rabbitmq,
   retryDelayMs: config.wmsRetryDelayMs,
   stateDir: path.resolve(config.stateDir),
-  failSku: config.wms.failSku
+  failSku: config.wms.failSku,
+  tmsAdapter
 });
 const outboxPublisher = new OutboxPublisher({
   ordersRepository,
@@ -23,6 +29,7 @@ rabbitmq.start();
 
 const orderService = new OrderService({
   ordersRepository,
+  inventoryService,
   notifyOutbox: () => {
     void outboxPublisher.flush().catch((error) => {
       logger.warn('Order saved in outbox; RabbitMQ publication is pending', {
@@ -31,7 +38,7 @@ const orderService = new OrderService({
     });
   }
 });
-const server = createApp({ orderService }).listen(config.port, () => {
+const server = createApp({ inventoryService, orderService }).listen(config.port, () => {
   logger.info('ABC Retail Integration API started', {
     port: config.port,
     wmsMode: config.wms.mode

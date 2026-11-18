@@ -8,17 +8,18 @@ const {
   retryQueue,
   assertTopology
 } = require('./topology');
-const { nextFailureAction } = require('./retry-policy');
+const { MAX_RETRIES, nextFailureAction } = require('./retry-policy');
 
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
 class RabbitMqRuntime {
-  constructor({ url, reconnectMs, retryDelayMs, stateDir, failSku }) {
+  constructor({ url, reconnectMs, retryDelayMs, stateDir, failSku, tmsAdapter }) {
     this.url = url;
     this.reconnectMs = reconnectMs;
     this.retryDelayMs = retryDelayMs;
     this.stateDir = stateDir;
     this.failSku = failSku;
+    this.tmsAdapter = tmsAdapter;
     this.connection = null;
     this.confirmChannel = null;
     this.stopped = true;
@@ -84,7 +85,8 @@ class RabbitMqRuntime {
     this.confirmChannel = await connection.createConfirmChannel();
     const handlers = require('./order-consumers').createHandlers({
       stateDir: this.stateDir,
-      failSku: this.failSku
+      failSku: this.failSku,
+      tmsAdapter: this.tmsAdapter
     });
 
     for (const consumer of consumers) {
@@ -149,13 +151,25 @@ class RabbitMqRuntime {
 
   async routeFailedMessage(channel, consumer, message, error) {
     const messageHeaders = message.properties.headers || {};
-    const retryCount = Number(messageHeaders['x-retry-count'] || 0);
-    const targetQueue = nextFailureAction(retryCount) === 'retry'
+    const rawRetryCount = messageHeaders['x-retry-count'];
+    const parsedRetryCount = Number(rawRetryCount || 0);
+    const retryCount = Number.isInteger(parsedRetryCount) && parsedRetryCount >= 0
+      ? parsedRetryCount
+      : MAX_RETRIES;
+    if (retryCount === MAX_RETRIES && rawRetryCount !== undefined && parsedRetryCount !== MAX_RETRIES) {
+      logger.warn('Invalid retry count; routing message to DLQ', {
+        consumer: consumer.name,
+        eventId: message.properties.messageId
+      });
+    }
+    const retryEnabled = Boolean(consumer.retryExchange);
+    const action = retryEnabled ? nextFailureAction(retryCount) : 'dead-letter';
+    const targetQueue = action === 'retry'
       ? retryQueue(consumer.queue)
       : deadLetterQueue(consumer.queue);
     const headers = {
       ...messageHeaders,
-      'x-retry-count': retryCount + (targetQueue === retryQueue(consumer.queue) ? 1 : 0),
+      'x-retry-count': retryCount + (action === 'retry' ? 1 : 0),
       'x-last-error': error.message.slice(0, 500)
     };
 
@@ -182,9 +196,9 @@ class RabbitMqRuntime {
         error: publishError.message
       });
       try {
-        channel.nack(message, false, true);
+        channel.nack(message, false, false);
       } catch (ackError) {
-        logger.error('Could not requeue failed message', { error: ackError.message });
+        logger.error('Could not reject failed message to its DLQ', { error: ackError.message });
       }
     }
   }

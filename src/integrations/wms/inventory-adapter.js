@@ -7,26 +7,27 @@ class WmsIntegrationError extends Error {
   }
 }
 
-const mockInventory = new Map([
-  ['SKU123', 50],
-  ['SKU-LOW-STOCK', 2],
-  ['SKU-OUT-OF-STOCK', 0]
-]);
+const defaultMockInventory = Object.freeze({
+  SKU123: 50,
+  'SKU-LOW-STOCK': 2,
+  'SKU-OUT-OF-STOCK': 0
+});
 
 class InventoryAdapter {
-  constructor({ mode, baseUrl, timeoutMs, fetchImpl = fetch }) {
+  constructor({ mode, baseUrl, timeoutMs, mockInventory = defaultMockInventory, fetchImpl = fetch }) {
     this.mode = mode;
     this.baseUrl = baseUrl;
     this.timeoutMs = timeoutMs;
+    this.mockInventory = mockInventory;
     this.fetchImpl = fetchImpl;
   }
 
   async getInventory(sku) {
     if (this.mode === 'mock') {
-      const availableQuantity = mockInventory.get(sku);
-      if (availableQuantity === undefined) {
+      if (!Object.prototype.hasOwnProperty.call(this.mockInventory, sku)) {
         throw new WmsIntegrationError(404, 'SKU_NOT_FOUND', `SKU ${sku} was not found`);
       }
+      const availableQuantity = this.mockInventory[sku];
       return { sku, availableQuantity };
     }
 

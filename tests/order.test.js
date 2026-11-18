@@ -11,6 +11,7 @@ const { ConsumerEventsRepository } = require('../src/repositories/consumer-event
 const { OrderService } = require('../src/services/order-service');
 const { OutboxPublisher } = require('../src/services/outbox-publisher');
 const { MAX_RETRIES, nextFailureAction } = require('../src/messaging/retry-policy');
+const { WmsIntegrationError } = require('../src/integrations/wms/inventory-adapter');
 
 async function withTemporaryDirectory(run) {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'abc-retail-test-'));
@@ -39,9 +40,13 @@ test('order API persists an order and outbox event before returning 202', async 
     const repository = new OrdersRepository(directory);
     const orderService = new OrderService({
       ordersRepository: repository,
+      inventoryService: { lookup: async () => ({ sku: 'SKU123', availableQuantity: 50 }) },
       notifyOutbox: () => {}
     });
-    const app = createApp({ orderService });
+    const app = createApp({
+      inventoryService: { lookup: async () => ({ sku: 'SKU123', availableQuantity: 50 }) },
+      orderService
+    });
 
     await withServer(app, async (baseUrl) => {
       const response = await fetch(`${baseUrl}/api/v1/orders`, {
@@ -63,10 +68,105 @@ test('order API persists an order and outbox event before returning 202', async 
   });
 });
 
+test('order aggregates duplicate SKUs before checking sufficient inventory', async () => {
+  await withTemporaryDirectory(async (directory) => {
+    const repository = new OrdersRepository(directory);
+    const lookedUp = [];
+    const service = new OrderService({
+      ordersRepository: repository,
+      inventoryService: {
+        lookup: async (sku) => {
+          lookedUp.push(sku);
+          return { sku, availableQuantity: 6 };
+        }
+      },
+      notifyOutbox: () => {}
+    });
+
+    await service.create({
+      customerId: 'customer-aggregate',
+      items: [
+        { sku: 'SKU123', quantity: 2 },
+        { sku: 'SKU123', quantity: 4 }
+      ]
+    });
+
+    assert.deepEqual(lookedUp, ['SKU123']);
+    assert.equal((await repository.listOrders()).length, 1);
+    assert.equal((await repository.listPendingEvents()).length, 1);
+  });
+});
+
+test('insufficient aggregated inventory returns 409 without persisting or notifying the outbox', async () => {
+  await withTemporaryDirectory(async (directory) => {
+    const repository = new OrdersRepository(directory);
+    const lookedUp = [];
+    let notified = false;
+    const inventoryService = {
+      lookup: async (sku) => {
+        lookedUp.push(sku);
+        return { sku, availableQuantity: 5 };
+      }
+    };
+    const orderService = new OrderService({
+      ordersRepository: repository,
+      inventoryService,
+      notifyOutbox: () => { notified = true; }
+    });
+    const app = createApp({ inventoryService, orderService });
+
+    await withServer(app, async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/api/v1/orders`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          customerId: 'customer-insufficient',
+          items: [
+            { sku: 'SKU123', quantity: 2 },
+            { sku: 'SKU123', quantity: 4 }
+          ]
+        })
+      });
+
+      assert.equal(response.status, 409);
+      assert.equal((await response.json()).error.code, 'INSUFFICIENT_STOCK');
+    });
+
+    assert.deepEqual(lookedUp, ['SKU123']);
+    assert.equal((await repository.listOrders()).length, 0);
+    assert.equal((await repository.listPendingEvents()).length, 0);
+    assert.equal(notified, false);
+  });
+});
+
+test('WMS failure rejects order creation without persisting an order or outbox event', async () => {
+  await withTemporaryDirectory(async (directory) => {
+    const repository = new OrdersRepository(directory);
+    const service = new OrderService({
+      ordersRepository: repository,
+      inventoryService: {
+        lookup: async () => { throw new WmsIntegrationError(504, 'WMS_TIMEOUT', 'WMS timed out'); }
+      },
+      notifyOutbox: () => {}
+    });
+
+    await assert.rejects(
+      service.create({ customerId: 'customer-wms-error', items: [{ sku: 'SKU123', quantity: 1 }] }),
+      (error) => error.statusCode === 504 && error.code === 'WMS_TIMEOUT'
+    );
+    assert.equal((await repository.listOrders()).length, 0);
+    assert.equal((await repository.listPendingEvents()).length, 0);
+  });
+});
+
 test('outbox leaves the event pending when RabbitMQ publishing fails', async () => {
   await withTemporaryDirectory(async (directory) => {
     const repository = new OrdersRepository(directory);
-    const service = new OrderService({ ordersRepository: repository, notifyOutbox: () => {} });
+    const service = new OrderService({
+      ordersRepository: repository,
+      inventoryService: { lookup: async () => ({ sku: 'SKU123', availableQuantity: 50 }) },
+      notifyOutbox: () => {}
+    });
     await service.create({ customerId: 'customer-2', items: [{ sku: 'SKU123', quantity: 1 }] });
     const publisher = new OutboxPublisher({
       ordersRepository: repository,

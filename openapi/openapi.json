@@ -11,6 +11,7 @@
       "get": {
         "operationId": "getInventoryBySku",
         "summary": "Look up current inventory for a SKU",
+        "security": [{ "BearerAuth": [] }],
         "parameters": [
           {
             "name": "sku",
@@ -54,11 +55,180 @@
         }
       }
     },
+    "/api/v1/products/{id}/stock": {
+      "get": {
+        "operationId": "getProductStockById",
+        "summary": "Look up current inventory for a product",
+        "description": "In this project, the Product ID is the product SKU.",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "minLength": 1, "maxLength": 100 },
+            "description": "Product ID; this value is the SKU in the product catalog."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product and current stock found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "data"],
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "object",
+                      "required": ["productId", "sku", "availableQuantity"],
+                      "properties": {
+                        "productId": { "type": "string", "example": "SKU-0001" },
+                        "sku": { "type": "string", "example": "SKU-0001" },
+                        "availableQuantity": { "type": "integer", "minimum": 0, "example": 50 }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": {
+                    "productId": "SKU-0001",
+                    "sku": "SKU-0001",
+                    "availableQuantity": 50
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/ProductStockNotFound" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" },
+          "504": { "$ref": "#/components/responses/GatewayTimeout" }
+        }
+      }
+    },
+    "/api/v1/wms/inventory/{sku}": {
+      "servers": [
+        {
+          "url": "http://localhost:{port}",
+          "variables": { "port": { "default": "3100" } }
+        }
+      ],
+      "get": {
+        "operationId": "getMockWmsInventory",
+        "summary": "Read inventory from the Mock WMS",
+        "parameters": [
+          {
+            "name": "sku",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "minLength": 1, "maxLength": 100 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mock inventory returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["sku", "availableQuantity"],
+                  "properties": {
+                    "sku": { "type": "string" },
+                    "availableQuantity": { "type": "integer", "minimum": 0 }
+                  }
+                },
+                "example": { "sku": "SKU123", "availableQuantity": 50 }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/api/v1/tms/shipments": {
+      "servers": [
+        {
+          "url": "http://localhost:{port}",
+          "variables": { "port": { "default": "3300" } }
+        }
+      ],
+      "post": {
+        "operationId": "createMockTmsShipment",
+        "summary": "Create or retrieve an idempotent Mock TMS shipment",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["eventId", "orderId", "customerId", "items"],
+                "properties": {
+                  "eventId": { "type": "string", "minLength": 1 },
+                  "orderId": { "type": "string", "minLength": 1 },
+                  "customerId": { "type": "string", "minLength": 1 },
+                  "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "object",
+                      "required": ["sku", "quantity"],
+                      "properties": {
+                        "sku": { "type": "string", "minLength": 1 },
+                        "quantity": { "type": "integer", "minimum": 1 }
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "eventId": "event-id",
+                "orderId": "order-id",
+                "customerId": "customer-1001",
+                "items": [{ "sku": "SKU123", "quantity": 2 }]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Shipment created",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "shipment": {
+                      "shipmentId": "shipment-id",
+                      "eventId": "event-id",
+                      "orderId": "order-id",
+                      "customerId": "customer-1001",
+                      "items": [{ "sku": "SKU123", "quantity": 2 }],
+                      "status": "created",
+                      "createdAt": "2026-01-01T00:00:00.000Z"
+                    },
+                    "duplicate": false
+                  }
+                }
+              }
+            }
+          },
+          "200": { "description": "Matching shipment already exists for this eventId" },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "409": { "$ref": "#/components/responses/IdempotencyConflict" }
+        }
+      }
+    },
     "/api/v1/orders": {
       "post": {
         "operationId": "createOrder",
         "summary": "Accept an order for asynchronous processing",
         "description": "Persists the order and outbox event before returning. Payment, WMS and notification consumers process the event independently.",
+        "security": [{ "BearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
@@ -101,7 +271,12 @@
               }
             }
           },
-          "400": { "$ref": "#/components/responses/BadRequest" }
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "409": { "$ref": "#/components/responses/InsufficientStock" },
+          "502": { "$ref": "#/components/responses/BadGateway" },
+          "503": { "$ref": "#/components/responses/ServiceUnavailable" },
+          "504": { "$ref": "#/components/responses/GatewayTimeout" }
         }
       }
     },
@@ -123,10 +298,54 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
     "responses": {
+      "Unauthorized": {
+        "description": "A valid JWT bearer token is required",
+        "content": {
+          "application/json": {
+            "example": { "message": "Unauthorized" }
+          }
+        }
+      },
+      "ProductStockNotFound": {
+        "description": "The Product ID is not in the product catalog or the WMS has no inventory record for its SKU",
+        "content": {
+          "application/json": {
+            "examples": {
+              "productNotFound": {
+                "value": {
+                  "success": false,
+                  "error": { "code": "PRODUCT_NOT_FOUND", "message": "Product was not found" }
+                }
+              },
+              "skuNotFoundInWms": {
+                "value": {
+                  "success": false,
+                  "error": { "code": "SKU_NOT_FOUND", "message": "SKU was not found" }
+                }
+              }
+            }
+          }
+        }
+      },
       "BadRequest": {
         "description": "Invalid request",
         "content": { "application/json": { "example": { "success": false, "error": { "code": "INVALID_SKU", "message": "Invalid SKU" } } } }
+      },
+      "InsufficientStock": {
+        "description": "One or more requested SKUs do not have sufficient available inventory",
+        "content": { "application/json": { "example": { "success": false, "error": { "code": "INSUFFICIENT_STOCK", "message": "Insufficient stock for SKU SKU123" } } } }
+      },
+      "IdempotencyConflict": {
+        "description": "The eventId was already used for a different shipment request",
+        "content": { "application/json": { "example": { "success": false, "error": { "code": "IDEMPOTENCY_CONFLICT", "message": "eventId was already used for a different shipment" } } } }
       },
       "NotFound": {
         "description": "SKU or route not found",

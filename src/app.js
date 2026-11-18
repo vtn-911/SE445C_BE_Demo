@@ -1,9 +1,7 @@
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
-const config = require('./config');
-const { InventoryAdapter } = require('./integrations/wms/inventory-adapter');
-const { InventoryService } = require('./services/inventory-service');
 const { createInventoryRouter } = require('./routes/inventory-routes');
+const { createProductStockRouter } = require('./routes/product-stock-routes');
 const { createOrderRouter } = require('./routes/order-routes');
 const { errorHandler } = require('./errors');
 const logger = require('./logger');
@@ -18,10 +16,15 @@ function createApp({ inventoryService, orderService } = {}) {
   });
   app.use(express.json({ limit: '1mb' }));
 
-  const adapter = new InventoryAdapter(config.wms);
-  const service = inventoryService || new InventoryService(adapter);
+  if (!inventoryService) {
+    const config = require('./config');
+    const { InventoryAdapter } = require('./integrations/wms/inventory-adapter');
+    const { InventoryService } = require('./services/inventory-service');
+    inventoryService = new InventoryService(new InventoryAdapter(config.wms));
+  }
   app.get('/health', (req, res) => res.json({ success: true, status: 'ok' }));
-  app.use('/api/v1/inventory', createInventoryRouter(service));
+  app.use('/api/v1/inventory', createInventoryRouter(inventoryService));
+  app.use('/api/v1/products', createProductStockRouter(inventoryService));
   if (orderService) app.use('/api/v1/orders', createOrderRouter(orderService));
   app.use('/openapi.json', (req, res) => res.json(openApi));
   app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApi));

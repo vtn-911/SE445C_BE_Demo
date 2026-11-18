@@ -2,8 +2,9 @@ const crypto = require('node:crypto');
 const { HttpError } = require('../errors');
 
 class OrderService {
-  constructor({ ordersRepository, notifyOutbox }) {
+  constructor({ ordersRepository, inventoryService, notifyOutbox }) {
     this.ordersRepository = ordersRepository;
+    this.inventoryService = inventoryService;
     this.notifyOutbox = notifyOutbox;
   }
 
@@ -25,10 +26,27 @@ class OrderService {
       throw new HttpError(400, 'INVALID_ORDER', 'customerId and at least one valid SKU/quantity item are required');
     }
 
+    const items = input.items.map(({ sku, quantity }) => ({ sku, quantity }));
+    const requiredBySku = new Map();
+    for (const item of items) {
+      requiredBySku.set(item.sku, (requiredBySku.get(item.sku) || 0) + item.quantity);
+    }
+
+    for (const [sku, quantity] of requiredBySku) {
+      const inventory = await this.inventoryService.lookup(sku);
+      if (inventory.availableQuantity < quantity) {
+        throw new HttpError(
+          409,
+          'INSUFFICIENT_STOCK',
+          `Insufficient stock for SKU ${sku}`
+        );
+      }
+    }
+
     const order = {
       orderId: crypto.randomUUID(),
       customerId: input.customerId.trim(),
-      items: input.items.map(({ sku, quantity }) => ({ sku, quantity })),
+      items,
       status: 'accepted',
       createdAt: new Date().toISOString()
     };
