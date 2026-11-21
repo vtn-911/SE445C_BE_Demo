@@ -55,6 +55,16 @@ module.exports = {
     timeoutMs: positiveInteger('TMS_TIMEOUT_MS', 3000),
     mockPort: positiveInteger('TMS_MOCK_PORT', 3300)
   },
+  crm: {
+    mockPort: positiveInteger('CRM_MOCK_PORT', 3200)
+  },
+  batchReceiver: {
+    mockPort: positiveInteger('BATCH_RECEIVER_PORT', 3500)
+  },
+  dataMapping: {
+    serviceUrl: process.env.AI_MAPPING_SERVICE_URL || 'http://127.0.0.1:3400',
+    timeoutMs: positiveInteger('AI_MAPPING_TIMEOUT_MS', 35000)
+  },
   rabbitmq: {
     url: process.env.RABBITMQ_URL || 'amqp://localhost:5672',
     reconnectMs: positiveInteger('RABBITMQ_RECONNECT_MS', 3000)

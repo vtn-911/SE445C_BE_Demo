@@ -3,7 +3,7 @@ _transform: true
 
 services:
   - name: abc-retail-process-api
-    url: http://host.docker.internal:3000
+    url: http://backend:3000
     routes:
       - name: abc-retail-public-api
         paths:
@@ -15,7 +15,7 @@ services:
           key_claim_name: iss
           claims_to_verify:
             - exp
-          maximum_expiration: 900
+          maximum_expiration: 604800
           secret_is_base64: false
           header_names:
             - authorization
@@ -26,6 +26,42 @@ services:
           limit_by: ip
           policy: local
           fault_tolerant: false
+
+  - name: abc-retail-mock-crm
+    url: http://mock-crm:3200
+    routes:
+      - name: abc-retail-crm-api
+        paths:
+          - /api/v1/crm/customers
+        methods:
+          - PUT
+        strip_path: false
+    plugins:
+      - name: jwt
+        config:
+          key_claim_name: iss
+          claims_to_verify:
+            - exp
+          maximum_expiration: 604800
+          secret_is_base64: false
+          header_names:
+            - authorization
+          run_on_preflight: true
+      - name: rate-limiting
+        config:
+          minute: 100
+          limit_by: ip
+          policy: local
+          fault_tolerant: false
+
+  - name: abc-retail-api-docs
+    url: http://backend:3000
+    routes:
+      - name: abc-retail-public-api-docs
+        paths:
+          - /docs
+          - /openapi.json
+        strip_path: false
 
 consumers:
   - username: abc-retail-demo

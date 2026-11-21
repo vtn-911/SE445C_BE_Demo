@@ -146,4 +146,37 @@ test('JSON reader loads records and batch delivery preserves a failed batch for 
       assert.equal((await fs.readdir(failedBatchesDir)).length, 0);
     });
   });
+
+});
+
+test('manual batch sender persists a batch when the receiver is unavailable', async () => {
+  await withTemporaryDirectory(async (directory) => {
+    const inputFile = path.join(directory, 'products.json');
+    const failedBatchesDir = path.join(directory, 'failed');
+    await fs.writeFile(inputFile, JSON.stringify(makeProducts(2)), 'utf8');
+
+    const probe = createServer();
+    probe.listen(0, '127.0.0.1');
+    await once(probe, 'listening');
+    const { port } = probe.address();
+    probe.close();
+    await once(probe, 'close');
+
+    const service = new BatchService({
+      inputFile,
+      targetUrl: `http://127.0.0.1:${port}/api/v1/products/batch`,
+      timeoutMs: 1000,
+      failedBatchesDir
+    });
+
+    const result = await service.run();
+    assert.equal(result.batchCount, 1);
+    assert.equal(result.successRecords, 0);
+    assert.equal(result.failedRecords, 2);
+    assert.equal(result.failedBatches, 1);
+    const failureFiles = await fs.readdir(failedBatchesDir);
+    assert.equal(failureFiles.length, 1);
+    const failure = JSON.parse(await fs.readFile(path.join(failedBatchesDir, failureFiles[0]), 'utf8'));
+    assert.equal(failure.products.length, 2);
+  });
 });

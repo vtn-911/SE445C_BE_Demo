@@ -1,0 +1,135 @@
+services:
+  kong:
+    image: kong:3.9.4
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_PROXY_LISTEN: "0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./kong/kong.yml:/etc/kong/kong.yml:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+      mock-crm:
+        condition: service_healthy
+    networks:
+      - integration
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ./runtime/.env.backend
+    environment:
+      PORT: "3000"
+      HEALTHCHECK_PORT: "3000"
+      WMS_MODE: "http"
+      WMS_BASE_URL: http://mock-wms:3100/api/v1/wms
+      TMS_BASE_URL: http://mock-tms:3300/api/v1/tms
+      AI_MAPPING_SERVICE_URL: http://python-mapping:3400
+      BATCH_TARGET_URL: http://batch-receiver:3500/api/v1/products/batch
+      STATE_DIR: /app/state
+    volumes:
+      - ./state:/app/state
+    depends_on:
+      mock-wms:
+        condition: service_healthy
+      mock-tms:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      python-mapping:
+        condition: service_healthy
+    networks:
+      - integration
+
+  mock-wms:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["npm", "run", "mock:wms"]
+    environment:
+      WMS_MOCK_PORT: "3100"
+      HEALTHCHECK_PORT: "3100"
+      WMS_MOCK_INVENTORY: '{"SKU-0001":50,"SKU123":50,"SKU-LOW-STOCK":2,"SKU-OUT-OF-STOCK":0}'
+    networks:
+      - integration
+
+  mock-tms:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["npm", "run", "mock:tms"]
+    environment:
+      TMS_MOCK_PORT: "3300"
+      HEALTHCHECK_PORT: "3300"
+      STATE_DIR: /app/state
+    volumes:
+      - ./state:/app/state
+    networks:
+      - integration
+
+  mock-crm:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["npm", "run", "mock:crm"]
+    environment:
+      CRM_MOCK_PORT: "3200"
+      HEALTHCHECK_PORT: "3200"
+      STATE_DIR: /app/state
+    volumes:
+      - ./state:/app/state
+    networks:
+      - integration
+
+  batch-receiver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["npm", "run", "mock:batch-receiver"]
+    environment:
+      BATCH_RECEIVER_PORT: "3500"
+      HEALTHCHECK_PORT: "3500"
+      STATE_DIR: /app/state
+    volumes:
+      - ./state:/app/state
+    networks:
+      - integration
+
+  rabbitmq:
+    image: rabbitmq@sha256:753099a19b577c322117f793f864b3129cbba96d40317221a69d73976e3c843c
+    hostname: abc-rabbitmq
+    ports:
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - integration
+
+  python-mapping:
+    build:
+      context: .
+      dockerfile: ai_mapping/Dockerfile
+    env_file:
+      - ./ai_mapping/.env
+    networks:
+      - integration
+
+networks:
+  integration:
+    driver: bridge
+
+volumes:
+  rabbitmq-data:
+    external: true
+    name: abc_rabbitmq_data

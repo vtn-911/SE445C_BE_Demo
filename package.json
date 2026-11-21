@@ -10,8 +10,12 @@
     "test": "node --test",
     "batch:run": "node src/batch/cli.js",
     "batch:scheduler": "node src/batch/scheduler.js",
+    "mock:batch-receiver": "node src/mocks/batch-receiver/server.js",
+    "mock:crm": "node src/mocks/crm/server.js",
     "mock:wms": "node src/mocks/wms/server.js",
-    "mock:tms": "node src/mocks/tms/server.js"
+    "mock:tms": "node src/mocks/tms/server.js",
+    "dashboard": "node src/dashboard/server.js",
+    "dashboard:dev": "node --watch src/dashboard/server.js"
   },
   "engines": {
     "node": ">=20"

@@ -9,10 +9,12 @@ const { RabbitMqRuntime } = require('./messaging/rabbitmq-runtime');
 const { InventoryAdapter } = require('./integrations/wms/inventory-adapter');
 const { InventoryService } = require('./services/inventory-service');
 const { TmsShipmentAdapter } = require('./integrations/tms/shipment-adapter');
+const { DataMappingAdapter } = require('./integrations/data-mapping/mapping-adapter');
 
 const ordersRepository = new OrdersRepository(path.resolve(config.stateDir));
 const inventoryService = new InventoryService(new InventoryAdapter(config.wms));
 const tmsAdapter = new TmsShipmentAdapter(config.tms);
+const dataMappingService = new DataMappingAdapter(config.dataMapping);
 const rabbitmq = new RabbitMqRuntime({
   ...config.rabbitmq,
   retryDelayMs: config.wmsRetryDelayMs,
@@ -38,7 +40,7 @@ const orderService = new OrderService({
     });
   }
 });
-const server = createApp({ inventoryService, orderService }).listen(config.port, () => {
+const server = createApp({ inventoryService, orderService, dataMappingService }).listen(config.port, () => {
   logger.info('ABC Retail Integration API started', {
     port: config.port,
     wmsMode: config.wms.mode

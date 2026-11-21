@@ -110,6 +110,94 @@
         }
       }
     },
+    "/api/v1/crm/customers/{id}/points": {
+      "put": {
+        "operationId": "setMockCrmCustomerPoints",
+        "summary": "Set the loyalty points balance for a demo customer",
+        "description": "Replaces the customer's total points balance. Repeating the same request is idempotent.",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9._-]+$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["points"],
+                "additionalProperties": false,
+                "properties": {
+                  "points": { "type": "integer", "minimum": 0 }
+                }
+              },
+              "example": { "points": 120 }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Customer points balance updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["success", "data"],
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "object",
+                      "required": ["customerId", "points"],
+                      "properties": {
+                        "customerId": { "type": "string", "example": "CUST-0001" },
+                        "points": { "type": "integer", "minimum": 0, "example": 120 }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "data": { "customerId": "CUST-0001", "points": 120 }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Customer ID or points payload is invalid",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": { "code": "INVALID_POINTS", "message": "points must be a non-negative safe integer" }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": {
+            "description": "Customer is not present in the Mock CRM demo data",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": false,
+                  "error": { "code": "CUSTOMER_NOT_FOUND", "message": "Customer was not found" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/wms/inventory/{sku}": {
       "servers": [
         {
@@ -223,6 +311,125 @@
         }
       }
     },
+    "/api/v1/data-mapping/products": {
+      "post": {
+        "operationId": "mapLegacyProduct",
+        "summary": "Map legacy JSON/XML to Canonical Product v1",
+        "description": "Gemini proposes source paths from field names and types only. Python applies the proposal to the source values and validates the result. No catalog, Order, Outbox, or RabbitMQ state is changed.",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["format", "payload"],
+                "properties": {
+                  "format": {
+                    "type": "string",
+                    "enum": ["json", "xml"]
+                  },
+                  "payload": {
+                    "description": "For format=json, an object; for format=xml, an XML string.",
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "additionalProperties": true
+                      },
+                      { "type": "string" }
+                    ]
+                  }
+                }
+              },
+              "examples": {
+                "legacyJson": {
+                  "value": {
+                    "format": "json",
+                    "payload": {
+                      "ProductCode": "SKU-0001",
+                      "ProductName": "Organic Apples 1",
+                      "ProductCategory": "Fresh Produce",
+                      "UnitPrice": 4.99
+                    }
+                  }
+                },
+                "legacyXml": {
+                  "value": {
+                    "format": "xml",
+                    "payload": "<Product><ProductCode>SKU-0001</ProductCode><ProductName>Organic Apples 1</ProductName><ProductCategory>Fresh Produce</ProductCategory><UnitPrice>4.99</UnitPrice></Product>"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Legacy record mapped and validated as Canonical Product v1",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["status", "canonicalVersion", "data", "mapping", "confidence", "warnings"],
+                  "properties": {
+                    "status": { "type": "string", "enum": ["success"] },
+                    "canonicalVersion": { "type": "string", "enum": ["Product-v1"] },
+                    "data": {
+                      "type": "object",
+                      "required": ["sku", "name", "category", "price"],
+                      "properties": {
+                        "sku": { "type": "string", "minLength": 1, "example": "SKU-0001" },
+                        "name": { "type": "string", "minLength": 1, "example": "Organic Apples 1" },
+                        "category": { "type": "string", "minLength": 1, "example": "Fresh Produce" },
+                        "price": { "type": "number", "minimum": 0, "example": 4.99 }
+                      }
+                    },
+                    "mapping": {
+                      "type": "object",
+                      "properties": {
+                        "sku": { "type": "string" },
+                        "name": { "type": "string" },
+                        "category": { "type": "string" },
+                        "price": { "type": "string" }
+                      },
+                      "additionalProperties": false
+                    },
+                    "confidence": { "type": "string", "enum": ["high"] },
+                    "warnings": { "type": "array", "items": { "type": "string" } }
+                  }
+                },
+                "example": {
+                  "status": "success",
+                  "canonicalVersion": "Product-v1",
+                  "data": {
+                    "sku": "SKU-0001",
+                    "name": "Organic Apples 1",
+                    "category": "Fresh Produce",
+                    "price": 4.99
+                  },
+                  "mapping": {
+                    "sku": "/ProductCode",
+                    "name": "/ProductName",
+                    "category": "/ProductCategory",
+                    "price": "/UnitPrice"
+                  },
+                  "confidence": "high",
+                  "warnings": []
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/MappingBadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "413": { "$ref": "#/components/responses/MappingPayloadTooLarge" },
+          "422": { "$ref": "#/components/responses/MappingNeedsReview" },
+          "502": { "$ref": "#/components/responses/MappingBadGateway" },
+          "503": { "$ref": "#/components/responses/MappingUnavailable" },
+          "504": { "$ref": "#/components/responses/MappingTimeout" }
+        }
+      }
+    },
     "/api/v1/orders": {
       "post": {
         "operationId": "createOrder",
@@ -331,6 +538,76 @@
                   "error": { "code": "SKU_NOT_FOUND", "message": "SKU was not found" }
                 }
               }
+            }
+          }
+        }
+      },
+      "MappingBadRequest": {
+        "description": "The mapping envelope or JSON/XML source payload is malformed",
+        "content": {
+          "application/json": {
+            "example": {
+              "status": "error",
+              "error": { "code": "INVALID_XML", "message": "XML payload is malformed or contains prohibited declarations" }
+            }
+          }
+        }
+      },
+      "MappingPayloadTooLarge": {
+        "description": "The mapping request exceeds the 1 MiB request limit",
+        "content": {
+          "application/json": {
+            "example": {
+              "status": "error",
+              "error": { "code": "PAYLOAD_TOO_LARGE", "message": "Mapping request exceeds the size limit" }
+            }
+          }
+        }
+      },
+      "MappingNeedsReview": {
+        "description": "The mapping is ambiguous, incomplete, references an unknown source path, or fails Canonical Product validation; no canonical data is returned",
+        "content": {
+          "application/json": {
+            "example": {
+              "status": "needsReview",
+              "canonicalVersion": "Product-v1",
+              "mapping": { "sku": "/ProductCode" },
+              "confidence": "low",
+              "unmappedFields": ["name", "category", "price"],
+              "warnings": ["Required target fields could not be mapped confidently"]
+            }
+          }
+        }
+      },
+      "MappingBadGateway": {
+        "description": "The Node Process API received an invalid response from the Python mapping service",
+        "content": {
+          "application/json": {
+            "example": {
+              "success": false,
+              "error": { "code": "MAPPING_SERVICE_INVALID_RESPONSE", "message": "The request could not be completed" }
+            }
+          }
+        }
+      },
+      "MappingUnavailable": {
+        "description": "Gemini or the Python mapping service is unavailable, the API key is invalid, or the quota is exhausted",
+        "content": {
+          "application/json": {
+            "example": {
+              "status": "error",
+              "error": { "code": "GEMINI_API_ERROR", "message": "Gemini API returned an error" }
+            }
+          }
+        }
+      },
+      "MappingTimeout": {
+        "description": "Gemini or the internal mapping request timed out",
+        "content": {
+          "application/json": {
+            "example": {
+              "status": "error",
+              "error": { "code": "GEMINI_TIMEOUT", "message": "Gemini did not respond before the timeout" }
             }
           }
         }
